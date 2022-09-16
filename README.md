@@ -8,13 +8,17 @@ Quick and simple Azure Active Directory authentication and authorization
 
 - Navigate to Azure portal and create app registration: `QuickAndSimpleApiAuth`
 - Under `Expose API` blade: `Set application ID URI`
-- Under `Expose API` blade: Create scope `QuickAndSimpleApiAuth.All`
+- Under `Expose API` blade: Create scope `QuickAndSimpleApiAuth.All` for `Admins and users`
 - Create specified platform at `Authentication -> Add Platform` with parameters:
     - Type: `Web`
     - Redirect URIs: `https://localhost:7221/signin-oidc`
     - Front-channel logout URL: `https://localhost:7221/signout-oidc`
     - ID Tokens: `Checked`
     - Access Tokens: `Checked`
+
+## Create roles
+
+- Manager for users and groups
 
 ## Add Nuget Packages
 
