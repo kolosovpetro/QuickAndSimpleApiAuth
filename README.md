@@ -6,16 +6,20 @@ Quick and simple role-based Azure Active Directory authentication and authorizat
 
 ## 1. Create app registration
 
-- Navigate to Azure portal and create app registration: `QuickAndSimpleApiAuth`
-- Record the data of newly created app registration:
-    - Client ID: `8753c306-bd03-45be-be09-32a2218eb100`
+- Navigate to Azure portal and create app registration: `QuickAndSimpleApiAuthApp` with `Single tenant`
+- Record the data of newly `QuickAndSimpleApiAuthApp` created app registration:
+    - Client ID: `6f33c1bb-4290-40ed-a026-8fb4bb8b326e`
     - Tenant ID: `b40a105f-0643-4922-8e60-10fc1abf9c4b`
 - `Set application ID URI` under `Expose API` blade
 - Create scope `QuickAndSimpleApiAuth.All` for `Admins and users` under `Expose API` blade
 - Create app role under `App roles` blade:
     - `Manager`
+    - `Admin`
+    - `Reader`
 
 ## 2. Create ASP NET Core Web API project
+
+Use .NET 6.0 Target platform
 
 #### 2.1 Add Nuget Packages
 
@@ -48,7 +52,7 @@ Where Client ID, Tenant ID and Scopes are from **Step 1**
   "AzureAd": {
     "Instance": "https://login.microsoftonline.com/",
     "TenantId": "b40a105f-0643-4922-8e60-10fc1abf9c4b",
-    "ClientId": "8753c306-bd03-45be-be09-32a2218eb100",
+    "ClientId": "6f33c1bb-4290-40ed-a026-8fb4bb8b326e",
     "Scopes": "QuickAndSimpleApiAuth.All"
   },
 ```
@@ -120,13 +124,41 @@ Where Client ID, Tenant ID and Scopes are from **Step 1**
 - Print new user principal name: `(Get-AzureADUser -Filter "MailNickName eq '$userName'").UserPrincipalName`
 - User Principal Name (UPN): `SabrinaBridges@kolosovp94gmail.onmicrosoft.com`
 
-## Configure Postman request to get token
+## 4. Assign roles to test users
 
-- Request type: `POST`
-- Request URL: `https://login.microsoftonline.com/b40a105f-0643-4922-8e60-10fc1abf9c4b/oauth2/v2.0/token`
-- Header value: `Content-Type: application/x-www-form-urlencoded`
-- Body with form data:
-    - `grant_type`: `client_credentials`
-    - `client_id`: `8753c306-bd03-45be-be09-32a2218eb100`
-    - `client_secret`: `Generate in azure portal and keep`
-    - `scope`: `api://8753c306-bd03-45be-be09-32a2218eb100/QuickAndSimpleApiAuth.All`
+- Go to `Azure Portal -> Enterprise Applications -> QuickAndSimpleApiAuth -> 1. Assign users and groups`
+- Assign roles to the test users:
+    - Manager: `AlexaWagner@kolosovp94gmail.onmicrosoft.com`
+    - Admin: `RichardTrager@kolosovp94gmail.onmicrosoft.com`
+    - Reader: `SabrinaBridges@kolosovp94gmail.onmicrosoft.com`
+
+## 5. Create app registration for Postman client
+
+- Navigate to Azure portal and create app registration: `QuickAndSimpleApiAuthPostmanApp` with `Single tenant`
+- Record the data of newly created `QuickAndSimpleApiAuthPostmanApp` app registration:
+    - Client ID: `0efacdad-fe7d-48b3-9531-771e612d3b4e`
+    - Tenant ID: `b40a105f-0643-4922-8e60-10fc1abf9c4b`
+- In `Authentication` blade `Add a platform` with parameters
+    - Type: `Web`
+    - Redirect URI: `https://oauth.pstmn.io/v1/callback`
+    - Access tokens (used for implicit flows): `Checked`
+    - ID tokens (used for implicit and hybrid flows): `Checked`
+
+## 6. Configure Postman request
+
+- Request type: `GET`
+- Request URL: `https://localhost:44335/WeatherForecast/GetWeatherManager`
+- Headers:
+    - Content-Type: `application/x-www-form-urlencoded`
+- Authorization:
+    - Type: `OAuth 2.0`
+    - Add authorization data to: `Request Headers`
+    - Token name: `QuickToken`
+    - Grant type: `Authorization Code`
+    - Callback URL: `https://oauth.pstmn.io/v1/callback`
+    - Auth URL: `https://login.microsoftonline.com/b40a105f-0643-4922-8e60-10fc1abf9c4b/oauth2/v2.0/authorize`
+    - Access Token URL: `https://login.microsoftonline.com/b40a105f-0643-4922-8e60-10fc1abf9c4b/oauth2/v2.0/token`
+    - Client ID: `0efacdad-fe7d-48b3-9531-771e612d3b4e`
+    - Client Secret: `Create you own in app regirstation -> Certificates and secrets`
+    - Scope: `api://6f33c1bb-4290-40ed-a026-8fb4bb8b326e/QuickAndSimpleApiAuth.All`
+    - Client Authentication: `Send as Basic Auth header`
