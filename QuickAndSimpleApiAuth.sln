@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "img", "img", "{F3DEFD8C-69A
 		img\04_roles_are_created.PNG = img\04_roles_are_created.PNG
 		img\05_enterprise_app_user_roles_assigned.PNG = img\05_enterprise_app_user_roles_assigned.PNG
 		img\06_configure_postman_app_platform.PNG = img\06_configure_postman_app_platform.PNG
+		img\07_postman_config.png = img\07_postman_config.png
+		img\08_alexa_token_example.png = img\08_alexa_token_example.png
 	EndProjectSection
 EndProject
 Global
