@@ -12,10 +12,12 @@ Quick and simple role-based Azure Active Directory authentication and authorizat
     - Tenant ID: `b40a105f-0643-4922-8e60-10fc1abf9c4b`
 - `Set application ID URI` under `Expose API` blade
 - Create scope `QuickAndSimpleApiAuth.All` for `Admins and users` under `Expose API` blade
-- Create app role under `App roles` blade:
+- Create roles under `App roles` blade:
     - `Manager`
     - `Admin`
     - `Reader`
+
+PS: Allowed member types are `Users/Groups`
 
 ## 2. Create ASP NET Core Web API project
 
@@ -62,10 +64,9 @@ Where Client ID, Tenant ID and Scopes are from **Step 1**
 - Controller
 
 ```csharp
-[RequiredScope(RequiredScopesConfigurationKey = "AzureAd:Scopes")]
-[Authorize]
 [ApiController]
 [Route("[controller]")]
+[RequiredScope(RequiredScopesConfigurationKey = "AzureAd:Scopes")]
 ```
 
 - HTTP action
@@ -124,6 +125,13 @@ Where Client ID, Tenant ID and Scopes are from **Step 1**
 - Print new user principal name: `(Get-AzureADUser -Filter "MailNickName eq '$userName'").UserPrincipalName`
 - User Principal Name (UPN): `SabrinaBridges@kolosovp94gmail.onmicrosoft.com`
 
+#### 3.5 Review the outputs
+
+- Powershell
+  ![Powershell_users](https://raw.githubusercontent.com/kolosovpetro/QuickAndSimpleApiAuth/master/img/01_users_created_powershell.PNG)
+- Azure Portal
+  ![Azure_portal_users](https://raw.githubusercontent.com/kolosovpetro/QuickAndSimpleApiAuth/master/img/02_ad_portal_users.PNG)
+
 ## 4. Assign roles to test users
 
 - Go to `Azure Portal -> Enterprise Applications -> QuickAndSimpleApiAuth -> 1. Assign users and groups`
@@ -131,6 +139,8 @@ Where Client ID, Tenant ID and Scopes are from **Step 1**
     - Manager: `AlexaWagner@kolosovp94gmail.onmicrosoft.com`
     - Admin: `RichardTrager@kolosovp94gmail.onmicrosoft.com`
     - Reader: `SabrinaBridges@kolosovp94gmail.onmicrosoft.com`
+- Review created role assignments
+  ![Role_assignments](https://raw.githubusercontent.com/kolosovpetro/QuickAndSimpleApiAuth/master/img/05_enterprise_app_user_roles_assigned.PNG)
 
 ## 5. Create app registration for Postman client
 
@@ -143,6 +153,8 @@ Where Client ID, Tenant ID and Scopes are from **Step 1**
     - Redirect URI: `https://oauth.pstmn.io/v1/callback`
     - Access tokens (used for implicit flows): `Checked`
     - ID tokens (used for implicit and hybrid flows): `Checked`
+    - Platform configuration screenshot:
+      ![Platform_configuration](https://raw.githubusercontent.com/kolosovpetro/QuickAndSimpleApiAuth/master/img/06_configure_postman_app_platform.PNG)
 
 ## 6. Configure Postman request
 
@@ -162,3 +174,5 @@ Where Client ID, Tenant ID and Scopes are from **Step 1**
     - Client Secret: `Create you own in app regirstation -> Certificates and secrets`
     - Scope: `api://6f33c1bb-4290-40ed-a026-8fb4bb8b326e/QuickAndSimpleApiAuth.All`
     - Client Authentication: `Send as Basic Auth header`
+- Postman config screenshot
+  ![Postman_config](https://raw.githubusercontent.com/kolosovpetro/QuickAndSimpleApiAuth/master/img/07_postman_config.png)
