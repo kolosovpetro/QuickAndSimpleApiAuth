@@ -1,48 +1,30 @@
-# Quick And Simple Api Auth
+# Quick And Simple API Auth
 
 [![Run Build and Test](https://github.com/kolosovpetro/QuickAndSimpleApiAuth/actions/workflows/run-build-and-test-dotnet.yml/badge.svg)](https://github.com/kolosovpetro/QuickAndSimpleApiAuth/actions/workflows/run-build-and-test-dotnet.yml)
 
-Quick and simple Azure Active Directory authentication and authorization
+Quick and simple role-based Azure Active Directory authentication and authorization using JWT tokens
 
-## Create app registration
+## 1. Create app registration
 
 - Navigate to Azure portal and create app registration: `QuickAndSimpleApiAuth`
-- Under `Expose API` blade: `Set application ID URI`
-- Under `Expose API` blade: Create scope `QuickAndSimpleApiAuth.All` for `Admins and users`
-- Create specified platform at `Authentication -> Add Platform` with parameters:
-    - Type: `Web`
-    - Redirect URIs: `https://localhost:7221/signin-oidc`
-    - Front-channel logout URL: `https://localhost:7221/signout-oidc`
-    - ID Tokens: `Checked`
-    - Access Tokens: `Checked`
+- Record the data of newly created app registration:
+    - Client ID: `8753c306-bd03-45be-be09-32a2218eb100`
+    - Tenant ID: `b40a105f-0643-4922-8e60-10fc1abf9c4b`
+- `Set application ID URI` under `Expose API` blade
+- Create scope `QuickAndSimpleApiAuth.All` for `Admins and users` under `Expose API` blade
+- Create app role under `App roles` blade:
+    - `Manager`
 
-## Create roles
+## 2. Create ASP NET Core Web API project
 
-- Manager for users and groups
+#### 2.1 Add Nuget Packages
 
-## Add Nuget Packages
+- `Microsoft.AspNetCore.Authentication.JwtBearer`
+- `Microsoft.AspNetCore.Authentication.OpenIdConnect`
+- `Microsoft.Identity.Web`
+- `Microsoft.Identity.Web.UI`
 
-- Update nuget packages:
-    - `Microsoft.AspNetCore.Authentication.JwtBearer`
-    - `Microsoft.AspNetCore.Authentication.OpenIdConnect`
-    - `Microsoft.Identity.Web`
-    - `Microsoft.Identity.Web.UI`
-
-## Add section to appsettings json
-
-```bash
-  "AzureAd": {
-    "Instance": "https://login.microsoftonline.com/",
-    "Domain": "kolosovp94gmail.onmicrosoft.com",
-    "TenantId": "b40a105f-0643-4922-8e60-10fc1abf9c4b",
-    "ClientId": "8753c306-bd03-45be-be09-32a2218eb100",
-    "Scopes": "QuickAndSimpleApiAuth.All",
-    "CallbackPath": "/signin-oidc",
-    "SignedOutCallbackPath": "/signout-callback-oidc"
-  },
-```
-
-## Add required services
+#### 2.2 Update service collection
 
 ```csharp
 var configurationSection = builder.Configuration.GetSection("AzureAd");
@@ -52,13 +34,28 @@ builder.Services
     .AddMicrosoftIdentityWebApi(configurationSection);
 ```
 
-## Add auth middleware
+#### 2.3 Use Authentication middleware
 
 ```csharp
 app.UseAuthentication();
 ```
 
-## Add controller attributes
+#### 2.4 Add section to appsettings json
+
+Where Client ID, Tenant ID and Scopes are from **Step 1**
+
+```bash
+  "AzureAd": {
+    "Instance": "https://login.microsoftonline.com/",
+    "TenantId": "b40a105f-0643-4922-8e60-10fc1abf9c4b",
+    "ClientId": "8753c306-bd03-45be-be09-32a2218eb100",
+    "Scopes": "QuickAndSimpleApiAuth.All"
+  },
+```
+
+#### 2.5 Add required attributes
+
+- Controller
 
 ```csharp
 [RequiredScope(RequiredScopesConfigurationKey = "AzureAd:Scopes")]
@@ -66,6 +63,62 @@ app.UseAuthentication();
 [ApiController]
 [Route("[controller]")]
 ```
+
+- HTTP action
+
+```csharp
+[Authorize(Roles = "Manager")]
+[HttpGet("GetWeatherManager")]
+```
+
+## 3. Create test users via Az Powershell
+
+#### 3.1 Prerequisites
+
+- Update Windows Powershell as Administrator using: `Install-Module PSWindowsUpdate`
+- Install [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps)
+- Install as Powershell Administrator: `Install-Module AzureAD`
+
+#### 3.2 Connect to Azure Active Directory
+
+- Connect to AD: `Connect-AzureAD -TenantId "b40a105f-0643-4922-8e60-10fc1abf9c4b"`
+- Define domain variable: `$aadDomainName = ((Get-AzureAdTenantDetail).VerifiedDomains)[0].Name`
+
+#### 3.2 Manager Alexa Wagner
+
+- Create password profile:
+    - `$passwordProfile = New-Object -TypeName Microsoft.Open.AzureAD.Model.PasswordProfile`
+    - `$passwordProfile.Password = $env:AD_TEST_USER_PASSWORD`
+    - `$passwordProfile.ForceChangePasswordNextLogin = $false`
+- Define username variable: `$userName="AlexaWagner"`
+- Create Alexa Wagner user:
+  `New-AzureADUser -AccountEnabled $true -DisplayName $userName -PasswordProfile $passwordProfile -MailNickName $userName -UserPrincipalName "$userName@$aadDomainName"`
+- Print new user principal name: `(Get-AzureADUser -Filter "MailNickName eq '$userName'").UserPrincipalName`
+- User Principal Name (UPN): `AlexaWagner@kolosovp94gmail.onmicrosoft.com`
+
+#### 3.3 Admin Richard Trager
+
+- Create password profile:
+    - `$passwordProfile = New-Object -TypeName Microsoft.Open.AzureAD.Model.PasswordProfile`
+    - `$passwordProfile.Password = $env:AD_TEST_USER_PASSWORD`
+    - `$passwordProfile.ForceChangePasswordNextLogin = $false`
+- Define username variable: `$userName="RichardTrager"`
+- Create Richard Trager user:
+  `New-AzureADUser -AccountEnabled $true -DisplayName $userName -PasswordProfile $passwordProfile -MailNickName $userName -UserPrincipalName "$userName@$aadDomainName"`
+- Print new user principal name: `(Get-AzureADUser -Filter "MailNickName eq '$userName'").UserPrincipalName`
+- User Principal Name (UPN): `RichardTrager@kolosovp94gmail.onmicrosoft.com`
+
+#### 3.4 Reader Sabrina Bridges
+
+- Create password profile:
+    - `$passwordProfile = New-Object -TypeName Microsoft.Open.AzureAD.Model.PasswordProfile`
+    - `$passwordProfile.Password = $env:AD_TEST_USER_PASSWORD`
+    - `$passwordProfile.ForceChangePasswordNextLogin = $false`
+- Define username variable: `$userName="SabrinaBridges"`
+- Create Sabrina Bridges user:
+  `New-AzureADUser -AccountEnabled $true -DisplayName $userName -PasswordProfile $passwordProfile -MailNickName $userName -UserPrincipalName "$userName@$aadDomainName"`
+- Print new user principal name: `(Get-AzureADUser -Filter "MailNickName eq '$userName'").UserPrincipalName`
+- User Principal Name (UPN): `SabrinaBridges@kolosovp94gmail.onmicrosoft.com`
 
 ## Configure Postman request to get token
 
